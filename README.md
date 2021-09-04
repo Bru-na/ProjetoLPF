@@ -14,7 +14,12 @@ Lá você
 
 - java 1.8
 - kotlin
+- docker
 
 ### Executando
 
-- Escreva e execute no terminal `./gradlew bootRun`
+1. execute `sudo apt-get update`
+2. execute `sudo apt-get install openjdk-8-jdk`
+3. execute `sudo update-alternatives --set java /usr/lib/jvm/jdk1.8.0_version/bin/java`
+4. execute `gradle wrapper --gradle-version 7.1.1`
+5. execute `sudo ./gradlew bootRun`
