@@ -4,9 +4,436 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
+    <title>75 HARD Checklist</title>
 </head>
 <body>
-    <h1>Olá mundo</h1>
+    <div class="container">
+        <header class="container__header">
+            <img
+                class="container__header__logo"
+                src="https://valderyportfolio.s3.amazonaws.com/publicos/logo.jpeg"
+                alt="Minha logo">
+        </header>
+        <div class="container__content">
+            <section class="container__content__author">
+                <div class="container__content__author__challenge">
+                    <h1 class="container__content__author__challenge__title">O DESAFIO</h1>
+                    <p class="container__content__author__challenge__text">
+                        Criado por Andy Frisella o 75 HARD challenge é um programa de resistência mental capaz de transformar vidas a partir da disciplina.
+                        <br /><br />
+                        São 75 dias e 6 princípios que devem ser executados e seguidos à risca de maneira consistentes e sem pausas ou interrupções.
+                    </p>
+                </div>
+                <img
+                    class="container__content__author__img"
+                    src="https://valderyportfolio.s3.amazonaws.com/publicos/andy.jpeg"
+                    alt="Autor 75 HARD">
+            </section>
+            <section class="container__content__about">
+                <h2>PRINCÍPIOS</h2>
+                <p class="container__content__about__objective">
+                    1. Consuma um galão de ÁGUA PURA<br />
+                    2. Siga uma dieta SAUDÁVEL.<br />
+                    3. LEIA no mínimo 10 pgs de um livro de desenvolvimento(SEM audiolivros)<br />
+                    4. EXERCITE-SE 2x ao dia por pelo menos 45 minutos de cada vez(no mínimo um ao ar livre)<br />
+                    5. FOTOGRAFE seu progresso todos os dias<br /><br />
+                    SEM ÁLCOOL, SEM refeições fraudulentas, SEM desculpas!
+                </p>
+            </section>
+            <section class="container__content__tasks">
+                <div class="container__content__tasks__header">
+                    <img
+                        class="container__content__tasks__header__img"
+                        src="https://valderyportfolio.s3.amazonaws.com/publicos/logo.jpeg">
+                    <h2 class="container__content__tasks__header__title">DIA <span id="counter"></span></h2>
+                    <div></div>
+                </div>
+                <div id="tasks" class="container__content__tasks__card"></div>
+            </section>
+        </div>
+    </div>
+    <script>
+        const tasksElement = document.getElementById("tasks");
+        const counterElement = document.getElementById("counter");
+        const fullLengthOfDay = 86400000;
+        const STORAGE = {
+            COUNTER: "COUNTER",
+            TASKS: "TASKS",
+            LAST_SAVED_DAY: "LAST_SAVED_DAY",
+        };
+        const daysOfChallenge = 75;
+        const initialTasks = [
+            {
+                id: "task-1",
+                label: "1 galão de água",
+                value: false, 
+            },
+            {
+                id: "task-2",
+                label: "Seguir dieta saudável",
+                value: false, 
+            },
+            {
+                id: "task-3",
+                label: "Ler 10 páginas de um livro",
+                value: false, 
+            },
+            {
+                id: "task-4",
+                label: "Exercício ao céu aberto",
+                value: false, 
+            },
+            {
+                id: "task-5",
+                label: "Exercício com local livre",
+                value: false, 
+            },
+            {
+                id: "task-6",
+                label: "Fotografar progresso",
+                value: false, 
+            },
+        ];
+
+        let tasks = [];
+        let counter = 1;
+        let verifyTaksTimeout = null;
+
+        const setStorageItem = (item, value) => {
+            localStorage.setItem(item, value);
+        }
+
+        const fetchTasks = () => {
+            const storageTasks = localStorage.getItem(STORAGE.TASKS);
+            if (storageTasks) {
+                const parsedTasks = JSON.parse(storageTasks);
+                const filteredTasks = initialTasks.filter(task => !parsedTasks.some(cpTask => cpTask.id == task.id));
+                tasks = [...parsedTasks, ...filteredTasks];
+            } else {
+                tasks = initialTasks;
+            }
+        }
+
+        // Limpa os eventos por performance
+        const clearEvents = () => {
+            clearTimeout(verifyTaksTimeout);
+        }
+
+        const onWindowClose = () => {
+            clearEvents();
+            // Persiste o último dia que foi acessado
+            setStorageItem(STORAGE.LAST_SAVED_DAY, new Date().toISOString());
+            // Persiste o contador de dias
+            setStorageItem(STORAGE.COUNTER, counter);
+
+            // Persiste as tarefas mesmo após fechar
+            const tasksElements = tasksElement.querySelectorAll("input[type='checkbox']");
+            const tasksArr = Array.from(tasksElements);
+            const mappedTasks = tasksArr.map(element => ({
+                id: element.id,
+                label: tasks.find(tag => tag.id == element.id).label,
+                value: element.checked,
+            }));
+
+            setStorageItem(STORAGE.TASKS, JSON.stringify(mappedTasks));
+        }
+
+        // Adiciona ou remove a classe 'active' das labels,
+        // que é o que faz os checkbox ficarem visualmente checados
+        function toogleCheckbox(element) {
+            const isChecked = element.target.classList.contains("active");
+
+            if (isChecked) element.target.classList.remove("active");
+            else  element.target.classList.add("active");
+        }
+
+        // Remove classes ativas das labels
+        const removeActiveClasses = () => {
+            const elements = tasksElement.querySelectorAll("label.active");
+            const elementsArr = Array.from(elements);
+
+            elementsArr.forEach(element => element.classList.remove("active"));
+        }
+
+        const addTasks = () => {
+            // Remove as taks
+            tasksElement.innerHTML = "";
+            // Cria tasks novas
+            tasks.forEach((tag) => {
+                const node = document.createElement("fieldset");
+                node.classList.add("container__content__tasks__card__fieldset");
+                
+                const checkbox = document.createElement("input");
+                checkbox.classList.add("container__content__tasks__card__fieldset__checkbox");
+                checkbox.id = tag.id;
+                checkbox.name = tag.id;
+                checkbox.type = "checkbox";
+                checkbox.checked = tag.value;
+
+                const label = document.createElement("label");
+                label.classList.add("container__content__tasks__card__fieldset__label");
+                label.setAttribute("for", tag.id);
+                label.innerHTML = tag.label;
+                label.onclick = toogleCheckbox;
+                if (tag.value) label.classList.add("active");
+
+                const background = document.createElement("div");
+                background.classList.add("container__content__tasks__card__fieldset__background")
+
+                node.appendChild(checkbox);
+                node.appendChild(label);
+                node.appendChild(background);
+
+                tasksElement.appendChild(node);
+            });
+        }
+
+        const clearDays = () => {
+            counter = 1;
+            counterElement.innerHTML = counter;
+            setStorageItem(STORAGE.COUNTER, counter);
+        }
+        
+        const addDay = () => {
+            counter++;
+            counterElement.innerHTML = counter;
+            setStorageItem(STORAGE.COUNTER, counter);
+        }
+        
+        const setDays = (value) => {
+            counter = value;
+            counterElement.innerHTML = counter;
+            setStorageItem(STORAGE.COUNTER, counter);
+        }
+
+        const checkTasks = () => {
+            const checkElements = tasksElement.querySelectorAll("input[type='checkbox']");
+            const checkArray = Array.from(checkElements);
+            let allChecked = true;
+            checkArray.forEach(element => {
+                if (!element.checked) {
+                    allChecked = false;
+                    return;
+                } else {
+                    element.click();
+                }
+            });
+            removeActiveClasses();
+
+            if (allChecked) addDay();
+            else clearDays();
+
+            if (counter >= daysOfChallenge) alert("Parabéns! Você completou o desafio!");
+
+            // Re-starts the timeout
+            setTimeout(checkTasks, fullLengthOfDay);
+        }
+
+        /**
+         *  @description Gets time until the day is finished 
+         *  @param date {Date}
+         */
+        const getTimeUntilFinishDay = (date) => {
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const seconds = date.getSeconds();
+            let miliSeconds = date.getMilliseconds();
+            miliSeconds += hours * 60 * 60 * 1000;
+            miliSeconds += minutes * 60 * 1000;
+            miliSeconds += seconds * 1000;
+            return fullLengthOfDay - miliSeconds;
+        }
+
+        /**
+         * @description Compara se 2 datas tem 1 dia de diferença no máximo
+         * @param date1 {Date} lastSavedDay
+         * @param date2 {Date} today
+         * @returns {"ONE_DAY_PASED", "TODAY", "MORE_THAN_ONE_DAY"}
+        */
+        const compareDays = (date1, date2) => {
+            const isToday = date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
+            if (isToday) return "TODAY";
+
+            date1.setDate(date1.getDate() + 1);
+            const oneDayPased = date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
+            if (oneDayPased) return "ONE_DAY_PASED";
+            else return "MORE_THAN_ONE_DAY";
+        }
+
+        const verifyLastDate = () => {
+            // Compara as datas para definir de quanto vai ser o Timeout
+            let timeUntilFinishOfDay = null;
+            const today = new Date();
+            const lastSavedDay = localStorage.getItem(STORAGE.LAST_SAVED_DAY);
+            if (!lastSavedDay) {
+                setStorageItem(STORAGE.LAST_SAVED_DAY, today.toISOString());
+            } else {
+                // Verifica se o dia de hoje é mais do que
+                // 1 dia de diferença do dia salvo
+                const savedDay = new Date(lastSavedDay);
+                const daysPased = compareDays(savedDay, today);
+
+                if (daysPased === "ONE_DAY_PASED") checkTasks();
+                else if (daysPased === "MORE_THAN_ONE_DAY") clearDays();
+            }
+            timeUntilFinishOfDay = getTimeUntilFinishDay(today);
+
+            verifyTaksTimeout = setTimeout(checkTasks, timeUntilFinishOfDay);
+
+            // Verifica o contador de dias
+            const savedCounter = localStorage.getItem(STORAGE.COUNTER);
+            if (savedCounter)
+                setDays(Number(savedCounter));
+            else clearDays();
+        }
+
+        window.onload = function() {
+            fetchTasks();
+            addTasks();
+            verifyLastDate();
+        };
+
+        window.onbeforeunload = onWindowClose;
+        window.onunload = onWindowClose;
+    </script>
 </body>
+<style> 
+    :root{
+        --black: #000;
+        --primary: #ffd400;
+        --white: #fff;
+        --text-size: 20px;
+    }
+    body{
+        margin: 0;
+    }
+    .container {
+        display: flex;
+        flex-flow: column wrap;
+    }
+    .container__header {
+        display: flex;
+        padding: 8px 16px;
+        justify-content: flex-start;
+        align-items: center;
+        background-color: var(--black);
+    }
+    .container__header__logo {
+        width: 120px;
+    }
+    .container__content__author {
+        display: flex;
+        flex-direction: row;
+        background-image: url('https://valderyportfolio.s3.amazonaws.com/publicos/fundo-1.jpeg');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        padding-top: 24px;
+    }
+    .container__content__author > * {
+        width: 50%;
+    }
+    .container__content__author__challenge {
+        padding-left: 16px;
+    }
+    .container__content__author__challenge__title {
+        text-align: center;
+    }
+    .container__content__author__challenge__text {
+        line-height: 32px;
+        font-size: var(--text-size);
+    }
+    .container__content__about{
+        display: flex;
+        flex-flow: column nowrap;
+        background-image: url('https://valderyportfolio.s3.amazonaws.com/publicos/fundo-2.jpeg');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        color: var(--white);
+        height: 550px;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    .container__content__about__objective {
+        background-color: var(--black);
+        padding: 16px;
+        width: 40%;
+        min-width: 350px;
+        height: 400px;
+        line-height: 24px;
+    }
+    .container__content__tasks{
+        display: flex;
+        flex-flow: column wrap;
+        align-items: center;
+        padding-bottom: 16px;
+        background-image: url('https://valderyportfolio.s3.amazonaws.com/publicos/fundo-3.jpeg');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    .container__content__tasks > *{
+        width: 60%;
+        min-width: 350px;
+    }
+
+    .container__content__tasks__header {
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: space-between;
+        align-items: flex-end;
+    } 
+    .container__content__tasks__header__img{
+        height: 100px;
+    }
+    .container__content__tasks__header__title{
+        text-align: center;
+        color: var(--primary);
+    }
+    .container__content__tasks__card{
+        
+    }
+    .container__content__tasks__card__fieldset{
+        box-sizing: border-box;
+        border: none;
+        position: relative;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    .container__content__tasks__card__fieldset__background{
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 0;
+        background-color: #333333;
+        opacity: 0.3;
+        width: 100%;
+        height: 100%;
+    }
+    .container__content__tasks__card__fieldset__checkbox{
+        display: none;
+    }
+    .container__content__tasks__card__fieldset__label{
+        margin-left: 28px;
+        cursor: pointer;
+        color: var(--white);
+    }
+    .container__content__tasks__card__fieldset__label::before{
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        border: 2px solid var(--primary);
+        content: " ";
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        cursor: pointer;
+        transition: 0.2s;
+        z-index: 1;
+    }
+    .container__content__tasks__card__fieldset__label.active::before{
+        background-color: var(--primary);
+    }
+</style>
 </html>
