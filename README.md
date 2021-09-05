@@ -1,12 +1,13 @@
 # 75 HARD
 
-Este projeto foi feito tendo como base o defaio 75 HARD feito por Andy Frisella.
+Este projeto foi feito tendo como base o desafio 75 HARD feito por Andy Frisella.
 
 ## Como você interage nele?
 
 Existem checkbox com as tasks na parte de baixo do site.
 
-Lá você 
+Lá você pode marcar cada tarefa executada e a partir disso o desafio roda os dias cumpridos. 
+Caso uma das tarefas não seja marcada no período de um dia, ele reinicia.
 
 ## Como executar?
 
